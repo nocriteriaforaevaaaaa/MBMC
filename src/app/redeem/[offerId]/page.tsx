@@ -8,9 +8,18 @@ import {
   Clock, 
   Info, 
   ShoppingBag, 
-  Sparkles 
+  Sparkles,
+  CheckCircle2
 } from "lucide-react";
 import Link from "next/link";
+
+// Helper function to generate unique coupon code
+function generateCouponCode(offerId: string, studentId: string): string {
+  const offerPart = offerId.slice(-4).toUpperCase();
+  const studentPart = studentId.slice(-4).toUpperCase();
+  const random = Math.random().toString(36).substring(2, 6).toUpperCase();
+  return `EDU-${offerPart}-${studentPart}-${random}`;
+}
 
 export default async function RedeemPage({
   params,
@@ -22,20 +31,33 @@ export default async function RedeemPage({
   const session = await getSessionUser();
   if (!session || session.role !== "STUDENT") redirect("/login");
 
-  const offer = await prisma.offer.findUnique({
-    where: { id: offerId },
-    include: { merchant: true }, // Include merchant details for branding
+  // Get student record
+  const student = await prisma.student.findUnique({
+    where: { userId: session.userId },
   });
 
-  if (!offer || offer.status !== "ACTIVE") {
+  if (!student) redirect("/login");
+
+  // Get offer with redemptions and merchant
+  const offer = await prisma.offer.findUnique({
+    where: { id: offerId },
+    include: { 
+      merchant: true,
+      redemptions: {
+        where: { studentId: student.id },
+      },
+    },
+  });
+
+  if (!offer) {
     return (
       <main className="min-h-screen flex flex-col items-center justify-center bg-[#FDFDFF] p-6">
         <div className="h-16 w-16 bg-rose-50 rounded-full flex items-center justify-center text-rose-500 mb-4">
           <Info size={32} />
         </div>
-        <h1 className="text-2xl font-black text-slate-900 italic tracking-tighter">Offer Unavailable</h1>
+        <h1 className="text-2xl font-black text-slate-900 italic tracking-tighter">Offer Not Found</h1>
         <p className="text-slate-500 font-medium mt-2 mb-8 text-center max-w-xs">
-          This perk has expired or is no longer active.
+          This perk doesn't exist or has been removed.
         </p>
         <Link href="/dashboard" className="text-sm font-black uppercase tracking-widest text-indigo-600 flex items-center gap-2">
           <ArrowLeft size={16} /> Back to Dashboard
@@ -44,7 +66,82 @@ export default async function RedeemPage({
     );
   }
 
-  const couponCode = offer.codeTemplate ?? `EDU-${offer.id.slice(-6).toUpperCase()}`;
+  if (offer.status !== "ACTIVE") {
+    return (
+      <main className="min-h-screen flex flex-col items-center justify-center bg-[#FDFDFF] p-6">
+        <div className="h-16 w-16 bg-rose-50 rounded-full flex items-center justify-center text-rose-500 mb-4">
+          <Info size={32} />
+        </div>
+        <h1 className="text-2xl font-black text-slate-900 italic tracking-tighter">Offer Unavailable</h1>
+        <p className="text-slate-500 font-medium mt-2 mb-8 text-center max-w-xs">
+          This perk is currently {offer.status.toLowerCase()}.
+        </p>
+        <Link href="/dashboard" className="text-sm font-black uppercase tracking-widest text-indigo-600 flex items-center gap-2">
+          <ArrowLeft size={16} /> Back to Dashboard
+        </Link>
+      </main>
+    );
+  }
+
+  // Check if already redeemed
+  const existingRedemption = offer.redemptions[0];
+  const alreadyRedeemed = !!existingRedemption;
+  
+  let redemptionId: string;
+  let couponCode: string;
+  
+  // Create redemption if not already exists
+  if (!alreadyRedeemed) {
+    couponCode = generateCouponCode(offerId, student.id);
+    
+    // Create redemption record in database
+    const redemption = await prisma.$transaction(async (tx) => {
+      // Create redemption
+      const newRedemption = await tx.redemption.create({
+        data: {
+          couponCode,
+          offerId,
+          studentId: student.id,
+          method: offer.redemptionType, // "QR", "CODE", or "LINK"
+          status: "ISSUED",
+          redeemedAt: new Date(),
+        },
+      });
+      
+      // Increment redemption count on offer
+      await tx.offer.update({
+        where: { id: offerId },
+        data: {
+          redemptionCount: {
+            increment: 1,
+          },
+        },
+      });
+      
+      return newRedemption;
+    });
+    
+    redemptionId = redemption.id;
+    couponCode = redemption.couponCode;
+    
+    // Create audit log
+    await prisma.auditLog.create({
+      data: {
+        actorId: student.id,
+        entity: "REDEMPTION",
+        entityId: redemptionId,
+        action: "CREATE",
+        meta: {
+          offerId,
+          couponCode,
+          method: offer.redemptionType,
+        },
+      },
+    });
+  } else {
+    redemptionId = existingRedemption.id;
+    couponCode = existingRedemption.couponCode;
+  }
 
   return (
     <main className="min-h-screen bg-[#FDFDFF] relative overflow-hidden flex flex-col items-center justify-center p-6">
@@ -85,19 +182,102 @@ export default async function RedeemPage({
 
           {/* REDEMPTION CONTENT */}
           <div className="p-10 space-y-8">
+            {alreadyRedeemed && (
+              <div className="bg-emerald-50 border-2 border-emerald-200 rounded-3xl p-6 flex items-start gap-4">
+                <div className="h-10 w-10 bg-emerald-500 rounded-2xl flex items-center justify-center text-white shrink-0">
+                  <CheckCircle2 size={20} />
+                </div>
+                <div>
+                  <p className="text-sm font-black text-emerald-900 uppercase tracking-wide mb-1">
+                    Already Redeemed
+                  </p>
+                  <p className="text-xs text-emerald-700 leading-relaxed">
+                    You claimed this offer on {new Date(existingRedemption.redeemedAt).toLocaleDateString()}. Your unique code is displayed below.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {!alreadyRedeemed && (
+              <div className="bg-indigo-50 border-2 border-indigo-200 rounded-3xl p-6 flex items-start gap-4">
+                <div className="h-10 w-10 bg-indigo-500 rounded-2xl flex items-center justify-center text-white shrink-0">
+                  <Sparkles size={20} />
+                </div>
+                <div>
+                  <p className="text-sm font-black text-indigo-900 uppercase tracking-wide mb-1">
+                    Successfully Claimed!
+                  </p>
+                  <p className="text-xs text-indigo-700 leading-relaxed">
+                    You've successfully claimed this offer. Your unique code has been generated and saved.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Offer availability info */}
+            {offer.studentCap > 0 && (
+              <div className="bg-amber-50 border border-amber-100 rounded-2xl p-4">
+                <p className="text-xs font-bold text-amber-800 text-center">
+                  {offer.redemptionCount} of {offer.studentCap} redemptions used
+                </p>
+                <div className="mt-2 w-full bg-amber-200 rounded-full h-1.5">
+                  <div 
+                    className="bg-amber-500 h-1.5 rounded-full transition-all duration-500"
+                    style={{ 
+                      width: `${Math.min(100, (offer.redemptionCount / offer.studentCap) * 100)}%` 
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+
             <div className="space-y-4">
                <div className="flex items-center justify-between px-2">
-                  <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400">Unlock Details</h3>
+                  <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                    {alreadyRedeemed ? 'Your Code' : 'Unlock Details'}
+                  </h3>
                   <div className="flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">
-                     <ShieldCheck size={10} /> Active
+                     <ShieldCheck size={10} /> {alreadyRedeemed ? 'ISSUED' : 'ACTIVE'}
                   </div>
                </div>
                
-               {/* This is your enhanced Client Component */}
                <RedeemClient
                  couponCode={couponCode}
                  redirectUrl={offer.redirectUrl}
+                 offerId={offerId}
+                 studentId={student.id}
+                 alreadyRedeemed={alreadyRedeemed}
+                 redemptionMethod={offer.redemptionType}
                />
+            </div>
+
+            {/* Redemption details */}
+            <div className="bg-slate-50 rounded-2xl p-4 space-y-3">
+              <p className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                Redemption Details
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Redemption ID</p>
+                  <p className="text-xs font-mono text-slate-700 truncate">{redemptionId}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Method</p>
+                  <p className="text-xs font-bold text-slate-700">{offer.redemptionType}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Valid Until</p>
+                  <p className="text-xs font-medium text-slate-700">
+                    {new Date(offer.endAt).toLocaleDateString()}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Status</p>
+                  <p className="text-xs font-bold text-emerald-600">
+                    {alreadyRedeemed ? 'ISSUED' : 'NEW'}
+                  </p>
+                </div>
+              </div>
             </div>
 
             {/* TRUST & TERMS FOOTER */}
@@ -108,7 +288,7 @@ export default async function RedeemPage({
                     </div>
                     <div>
                         <p className="text-[10px] font-black uppercase tracking-widest text-slate-900">One-time Use</p>
-                        <p className="text-[10px] font-medium text-slate-400 leading-tight">Code valid for current session</p>
+                        <p className="text-[10px] font-medium text-slate-400 leading-tight">Code valid once per student</p>
                     </div>
                 </div>
                 <div className="flex items-start gap-3">

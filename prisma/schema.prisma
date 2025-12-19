@@ -74,7 +74,7 @@ model Offer {
   affiliateLink  String?
   imageUrl       String?
   status         OfferStatus    @default(ACTIVE)
-
+redemptionCount Int          @default(0) // Track total redemptions
   redemptions Redemption[]
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
@@ -90,8 +90,13 @@ model Redemption {
   method     String // "QR" | "CODE" | "LINK"
   tokenId    String?
   status     String    @default("ISSUED") // ISSUED | REDEEMED | EXPIRED
-  redeemedAt DateTime?
+  redeemedAt    DateTime @default(now())
+  
+  @@unique([offerId, studentId]) // One redemption per student per offer
+  @@index([offerId])
+  @@index([studentId])
   createdAt  DateTime  @default(now())
+  couponCode    String   @unique
 }
 
 model Verification {
