@@ -102,7 +102,17 @@ export default async function MerchantPage() {
               </div>
 
               <div className="grid md:grid-cols-2 gap-4">
-                <Input name="category" label="Category" placeholder="e.g. Food" icon={<Tag size={16}/>} required />
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Category</label>
+                  <select name="category" required className="w-full bg-slate-50 border-none rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 transition-all font-bold text-slate-700">
+                    <option value="">Select...</option>
+                    <option value="FOOD">Food & Drink</option>
+                    <option value="FASHION">Fashion</option>
+                    <option value="TECH">Technology</option>
+                    <option value="EDUCATION">Education</option>
+                    <option value="LIFESTYLE">Lifestyle</option>
+                  </select>
+                </div>
                 <Input name="discountPercent" type="number" label="Discount %" placeholder="20" icon={<Percent size={16}/>} required />
               </div>
 
