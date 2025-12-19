@@ -1,0 +1,206 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/**
+ * Your models & enums
+ */
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String?
+  image        String?
+  role         Role     @default(STUDENT)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  accounts Account[]
+  sessions Session[]
+  student  Student?
+  merchant Merchant?
+}
+
+model Student {
+  id                 String             @id @default(cuid())
+  userId             String             @unique
+  user               User               @relation(fields: [userId], references: [id])
+  college            String?
+  program            String?
+  year               String?
+  verificationStatus VerificationStatus @default(PENDING)
+  passExpiryAt       DateTime?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  verifications      Verification[]
+  redemptions        Redemption[]
+}
+
+model Merchant {
+  id        String     @id @default(cuid())
+  userId    String     @unique
+  user      User       @relation(fields: [userId], references: [id])
+  legalName String
+  tradeName String?
+  pan       String?
+  planTier  PlanTier   @default(FREE)
+  kycStatus KycStatus  @default(PENDING)
+  offers    Offer[]
+  locations Location[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model Offer {
+  id         String   @id @default(cuid())
+  merchantId String
+  merchant   Merchant @relation(fields: [merchantId], references: [id])
+  discountPercent Int @default(0)
+  title          String
+  description    String
+  category       String
+  redirectUrl    String @default("")
+  online         Boolean        @default(false)
+  startAt        DateTime
+  endAt          DateTime
+  studentCap     Int            @default(1)
+  redemptionType RedemptionType @default(QR)
+  codeTemplate   String?
+  affiliateLink  String?
+  imageUrl       String?
+  status         OfferStatus    @default(ACTIVE)
+
+  redemptions Redemption[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model Redemption {
+  id         String    @id @default(cuid())
+  offerId    String
+  offer      Offer     @relation(fields: [offerId], references: [id])
+  studentId  String
+  student    Student   @relation(fields: [studentId], references: [id])
+  locationId String?
+  method     String // "QR" | "CODE" | "LINK"
+  tokenId    String?
+  status     String    @default("ISSUED") // ISSUED | REDEEMED | EXPIRED
+  redeemedAt DateTime?
+  createdAt  DateTime  @default(now())
+}
+
+model Verification {
+  id         String    @id @default(cuid())
+  studentId  String
+  student    Student   @relation(fields: [studentId], references: [id])
+  status     String    @default("PENDING") // APPROVED | REJECTED | NEEDS_REVIEW
+  ocrJson    Json?
+  tamperJson Json?
+  reasons    Json?
+  decidedBy  String?
+  decidedAt  DateTime?
+  createdAt  DateTime  @default(now())
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String?
+  entity    String
+  entityId  String
+  action    String
+  meta      Json?
+  createdAt DateTime @default(now())
+}
+
+/**
+ * Minimal placeholder so Merchant.locations compiles
+ */
+model Location {
+  id         String   @id @default(cuid())
+  merchantId String
+  merchant   Merchant @relation(fields: [merchantId], references: [id])
+  name       String
+  address    String?
+}
+
+/**
+ * Auth.js tables
+ */
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+/**
+ * Enums
+ */
+enum Role {
+  STUDENT
+  MERCHANT
+  ADMIN
+}
+
+enum VerificationStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum PlanTier {
+  FREE
+  STANDARD
+  PREMIUM
+}
+
+enum KycStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum RedemptionType {
+  QR
+  CODE
+  LINK
+}
+
+enum OfferStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  ENDED
+}
