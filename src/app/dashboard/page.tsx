@@ -2,19 +2,16 @@ import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { 
-  Percent, 
-  Store, 
-  TrendingUp, 
-  Calendar, 
-  Tag, 
-  ArrowRight, 
+import {
+  Store,
+  TrendingUp,
+  ShieldCheck,
+  ArrowRight,
   Sparkles,
-  Ticket,
   Zap,
-  ShoppingBag,
+  MapPin,
+  ChevronRight,
   Search,
-  MapPin
 } from "lucide-react";
 
 export default async function DashboardPage() {
@@ -26,181 +23,152 @@ export default async function DashboardPage() {
     include: { merchant: true },
   });
 
-  // Calculate Featured Offer (Highest Discount)
   const featuredOffer = offers.length > 0 
-    ? offers.reduce((prev, current) => (prev.discountPercent > current.discountPercent) ? prev : current)
+    ? offers.reduce((prev, curr) => prev.discountPercent > curr.discountPercent ? prev : curr)
     : null;
 
   return (
-    <main className="min-h-screen bg-[#FDFDFF] text-slate-900 pb-20 relative overflow-hidden">
-      {/* LUXURY BACKGROUND ELEMENTS */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[800px] bg-gradient-to-b from-indigo-50/40 via-white to-transparent pointer-events-none" />
-      <div className="absolute top-[-5%] left-[-5%] w-[600px] h-[600px] rounded-full bg-indigo-100/30 blur-[120px] pointer-events-none" />
-      <div className="absolute top-[20%] right-[-10%] w-[500px] h-[500px] rounded-full bg-rose-100/20 blur-[100px] pointer-events-none" />
-
-      {/* NAVIGATION BAR */}
-      <nav className="relative z-30 px-8 py-6 flex justify-between items-center max-w-7xl mx-auto">
-        <Link href="/" className="flex items-center gap-3 group">
-          <div className="h-10 w-10 bg-gradient-to-tr from-indigo-600 to-rose-500 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-            <span className="text-white font-black italic text-sm">EP</span>
+    <main className="min-h-screen bg-[#FFFBF9] text-[#43281C] pb-20 font-sans selection:bg-orange-200">
+      {/* 1. SOFT NAV BAR */}
+      <nav className="sticky top-0 z-50 bg-[#FFFBF9]/80 backdrop-blur-md border-b border-orange-100">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+          <Link href="/" className="flex items-center gap-2 group">
+            <div className="bg-orange-500 p-1.5 rounded-xl group-hover:rotate-12 transition-transform">
+              <ShieldCheck className="text-white" size={20} strokeWidth={2.5} />
+            </div>
+            <span className="text-xl font-black tracking-tight bg-gradient-to-r from-orange-600 to-peach-500 bg-clip-text">
+              EduPerks.
+            </span>
+          </Link>
+          
+          <div className="flex items-center gap-4">
+            <div className="hidden md:flex items-center bg-orange-50/50 border border-orange-100 px-3 py-1.5 rounded-2xl">
+               <Search size={14} className="text-orange-400 mr-2" />
+               <input type="text" placeholder="Search brands..." className="bg-transparent text-xs outline-none placeholder:text-orange-300 w-32" />
+            </div>
+            <div className="flex items-center gap-2 bg-white px-2 py-1.5 rounded-2xl shadow-sm border border-orange-100">
+              <div className="h-7 w-7 rounded-xl bg-gradient-to-br from-orange-400 to-peach-500 text-[11px] text-white flex items-center justify-center font-bold shadow-orange-200 shadow-md">
+                {session.name?.charAt(0)}
+              </div>
+              <span className="text-xs font-bold text-orange-900/80 pr-1">{session.name?.split(" ")[0]}</span>
+            </div>
           </div>
-          <span className="text-2xl font-black tracking-tighter italic">Edu<span className="text-indigo-600">Perks</span></span>
-        </Link>
-        
-        <div className="flex items-center gap-4">
-            <div className="hidden md:block text-right">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Student Member</p>
-                <p className="text-sm font-bold text-slate-700">{session.email}</p>
-            </div>
-            <div className="h-11 w-11 rounded-2xl bg-white border border-slate-100 shadow-sm flex items-center justify-center font-black text-indigo-600">
-                {session.email?.charAt(0).toUpperCase()}
-            </div>
         </div>
       </nav>
 
-      <div className="max-w-7xl mx-auto px-8 relative z-20">
+      <div className="max-w-7xl mx-auto px-6 mt-8">
         
-        {/* HERO FEATURED SECTION */}
+        {/* 2. DYNAMIC HERO SECTION */}
         {featuredOffer && (
-          <section className="mb-20 mt-6">
-            <div className="relative overflow-hidden rounded-[48px] bg-slate-900 p-8 md:p-16 text-white shadow-2xl shadow-indigo-200/50">
-              {/* Dynamic Overlay */}
-              <div className="absolute top-0 right-0 w-full h-full bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-indigo-600/30 via-transparent to-transparent" />
-              
-              <div className="relative z-10 grid lg:grid-cols-2 gap-12 items-center">
-                <div>
-                    <div className="flex items-center gap-3 mb-8">
-                        <span className="bg-rose-500 text-[10px] font-black uppercase tracking-[0.2em] px-4 py-1.5 rounded-full flex items-center gap-2">
-                            <Sparkles size={12} fill="white" /> Spotlight Deal
-                        </span>
-                        <div className="h-[1px] w-12 bg-white/20" />
-                    </div>
-                    
-                    <h2 className="text-5xl md:text-7xl font-black tracking-tighter italic leading-[0.9] mb-6">
-                        Save <span className="text-indigo-400">{featuredOffer.discountPercent}%</span> <br /> 
-                        at {featuredOffer.merchant.tradeName}
-                    </h2>
-                    
-                    <p className="text-slate-400 text-lg md:text-xl font-medium mb-10 max-w-md leading-relaxed">
-                        {featuredOffer.title}
-                    </p>
-                    
-                    <Link 
-                        href={`/redeem/${featuredOffer.id}`}
-                        className="group inline-flex items-center gap-4 bg-white text-slate-900 px-10 py-5 rounded-[24px] font-black uppercase tracking-widest text-xs hover:bg-indigo-50 transition-all hover:gap-6"
-                    >
-                        Claim Access <ArrowRight size={20} className="text-indigo-600" />
-                    </Link>
-                </div>
+          <section className="relative overflow-hidden rounded-[2.5rem] bg-[#3C1A0D] p-1 shadow-2xl shadow-orange-900/20">
+            {/* Background Accent Flairs */}
+            <div className="absolute top-0 right-0 w-64 h-64 bg-orange-500/20 blur-[80px] -mr-32 -mt-32" />
+            <div className="absolute bottom-0 left-0 w-64 h-64 bg-peach-300/10 blur-[80px] -ml-32 -mb-32" />
 
-                <div className="hidden lg:flex justify-center relative">
-                    <div className="h-80 w-80 bg-white/5 rounded-[60px] backdrop-blur-3xl border border-white/10 flex items-center justify-center rotate-3 group">
-                         <div className="text-center">
-                            <ShoppingBag size={80} className="text-indigo-400/50 mb-4 mx-auto" />
-                            <p className="text-4xl font-black italic tracking-tighter">{featuredOffer.merchant.tradeName?.split(' ')[0]}</p>
-                         </div>
-                    </div>
-                    {/* Abstract Ring */}
-                    <div className="absolute -z-10 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] border border-white/5 rounded-full" />
+            <div className="relative z-10 bg-gradient-to-br from-orange-600/10 to-transparent rounded-[2.3rem] p-8 md:p-12 flex flex-col md:flex-row md:items-center justify-between gap-8">
+              <div className="flex-1">
+                <div className="inline-flex items-center gap-2 bg-orange-500/20 text-orange-300 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-[0.2em] mb-6 backdrop-blur-sm">
+                  <Sparkles size={12} className="fill-orange-300" /> Deal of the week
+                </div>
+                <h2 className="text-4xl md:text-5xl font-black text-white leading-[1.1] mb-6">
+                  Save <span className="text-orange-400">{featuredOffer.discountPercent}%</span> at <br />
+                  <span className="underline decoration-orange-500/30 underline-offset-8">{featuredOffer.merchant.tradeName}</span>
+                </h2>
+                <Link
+                  href={`/redeem/${featuredOffer.id}`}
+                  className="inline-flex items-center gap-3 bg-white text-orange-700 px-6 py-3 rounded-2xl font-black text-sm hover:bg-orange-50 transition-all hover:scale-105 active:scale-95 shadow-lg shadow-black/20"
+                >
+                  Claim My Voucher <ArrowRight size={18} />
+                </Link>
+              </div>
+
+              <div className="relative group">
+                <div className="absolute inset-0 bg-orange-400 blur-2xl opacity-20 group-hover:opacity-40 transition-opacity" />
+                <div className="relative bg-white/10 border border-white/20 backdrop-blur-xl rounded-[2rem] p-10 flex flex-col items-center justify-center min-w-[200px] rotate-3 hover:rotate-0 transition-transform duration-500">
+                  <span className="text-6xl font-black text-orange-400 tracking-tighter">{featuredOffer.discountPercent}%</span>
+                  <span className="text-xs font-bold text-orange-100 uppercase tracking-widest mt-2">Discount</span>
                 </div>
               </div>
             </div>
           </section>
         )}
 
-        {/* SEARCH & FILTERS BAR */}
-        <div className="flex flex-col lg:flex-row justify-between items-center gap-8 mb-12">
-          <div className="flex items-center gap-4">
-             <div className="h-12 w-12 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600">
-                <TrendingUp size={24} />
-             </div>
-             <div>
-                <h3 className="text-2xl font-black tracking-tight italic">All <span className="text-indigo-600">Discounts</span></h3>
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{offers.length} Verified Perks Available</p>
-             </div>
+        {/* 3. CATEGORY BAR */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 my-12">
+          <div>
+            <h3 className="text-2xl font-black text-[#3C1A0D] flex items-center gap-3">
+              <TrendingUp className="text-orange-500" strokeWidth={3} />
+              Fresh Perks
+            </h3>
+            <p className="text-orange-900/50 text-sm font-medium">Handpicked discounts just for you.</p>
           </div>
-
-          <div className="flex items-center gap-2 p-1.5 bg-slate-100/80 backdrop-blur-md rounded-[24px] border border-slate-200/50 w-full lg:w-auto">
-              {['Trending', 'Food', 'Tech', 'Fashion'].map((filter, i) => (
-                <button key={filter} className={`flex-1 lg:flex-none px-6 py-3 rounded-[18px] text-[10px] font-black uppercase tracking-widest transition-all ${i === 0 ? 'bg-white shadow-md text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}>
-                    {filter}
-                </button>
-              ))}
+          
+          <div className="flex gap-2 bg-orange-100/40 p-1.5 rounded-[1.25rem] border border-orange-100 w-fit">
+            {["All Perks", "Food", "Lifestyle", "Tech"].map((filter, i) => (
+              <button 
+                key={filter} 
+                className={`px-5 py-2 rounded-xl text-xs font-black transition-all ${
+                  i === 0 
+                  ? 'bg-white text-orange-600 shadow-sm border border-orange-100' 
+                  : 'text-orange-900/50 hover:bg-orange-100/50'
+                }`}
+              >
+                {filter}
+              </button>
+            ))}
           </div>
         </div>
 
-        {/* OFFERS GRID */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+        {/* 4. THE GRID */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {offers.map((offer) => (
-            <Link 
-              key={offer.id} 
+            <Link
+              key={offer.id}
               href={`/redeem/${offer.id}`}
-              className="group flex flex-col bg-white border border-slate-100 rounded-[40px] overflow-hidden hover:shadow-[0_40px_80px_-20px_rgba(0,0,0,0.1)] transition-all duration-500 hover:-translate-y-2"
+              className="group relative bg-white border border-orange-100 rounded-[2rem] p-5 hover:shadow-[0_20px_50px_rgba(255,125,50,0.1)] hover:-translate-y-1 transition-all duration-300 flex flex-col"
             >
-              {/* Card Header (Branding) */}
-              <div className="h-40 bg-slate-50 relative flex items-center justify-center overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/50 via-white to-rose-50/50" />
-                  
-                  {/* Floating Elements */}
-                  <div className="absolute top-4 left-4">
-                    <span className="bg-slate-900 text-white text-[8px] font-black uppercase tracking-[0.2em] px-3 py-1.5 rounded-full shadow-lg">
-                        {offer.category || "Exclusive"}
-                    </span>
-                  </div>
-
-                  <span className="relative text-5xl font-black text-slate-200 italic uppercase tracking-tighter group-hover:scale-110 transition-transform duration-700">
-                    {offer.merchant.tradeName?.split(' ')[0]}
-                  </span>
-
-                  <div className="absolute bottom-4 right-4 bg-indigo-600 text-white px-4 py-2 rounded-2xl shadow-xl shadow-indigo-200">
-                     <p className="text-xs font-black italic">{offer.discountPercent}% OFF</p>
-                  </div>
-              </div>
-
-              {/* Card Body */}
-              <div className="p-8 flex flex-col flex-1">
-                <div className="mb-6">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Store size={12} className="text-indigo-400" />
-                    <p className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">
-                        {offer.merchant.tradeName || offer.merchant.legalName}
-                    </p>
-                  </div>
-                  <h4 className="text-xl font-black text-slate-900 leading-[1.2] tracking-tight group-hover:text-indigo-600 transition-colors">
-                    {offer.title}
-                  </h4>
+              <div className="flex justify-between items-start mb-6">
+                <div className="h-12 w-12 bg-orange-50 rounded-2xl flex items-center justify-center text-orange-600 group-hover:bg-orange-500 group-hover:text-white transition-all duration-300 group-hover:shadow-lg group-hover:shadow-orange-200">
+                  <Store size={24} strokeWidth={2} />
                 </div>
+                <div className="flex flex-col items-end">
+                  <span className="text-[11px] font-black text-orange-700 bg-orange-100 px-3 py-1 rounded-full uppercase tracking-tighter">
+                    {offer.discountPercent}% Off
+                  </span>
+                </div>
+              </div>
+              
+              <div className="flex flex-col flex-1">
+                <p className="text-[10px] font-bold text-orange-400 uppercase tracking-widest mb-1.5">
+                  {offer.merchant.tradeName}
+                </p>
+                <h4 className="font-bold text-base text-[#3C1A0D] line-clamp-2 leading-snug mb-4 group-hover:text-orange-600 transition-colors">
+                  {offer.title}
+                </h4>
 
-                <div className="mt-auto pt-6 border-t border-slate-50">
-                    <div className="flex items-center justify-between mb-6">
-                        <div className="flex items-center gap-2 text-slate-500">
-                            <Zap size={14} className="text-amber-500 fill-amber-500" />
-                            <span className="text-[10px] font-bold uppercase tracking-tighter">Instant Access</span>
-                        </div>
-                        <div className="flex items-center gap-1.5 text-slate-400">
-                            <MapPin size={12} />
-                            <span className="text-[10px] font-bold uppercase">Online</span>
-                        </div>
-                    </div>
-                   
-                    <div className="w-full py-4 rounded-[20px] bg-slate-50 group-hover:bg-indigo-600 group-hover:text-white transition-all text-center text-[10px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-2">
-                      Get Coupon Code <ArrowRight size={14} />
-                    </div>
+                <div className="mt-auto flex items-center justify-between pt-4 border-t border-orange-50">
+                  <div className="flex items-center gap-1.5 text-orange-900/40">
+                    <Zap size={14} className="fill-orange-200 text-orange-300" />
+                    <span className="text-[11px] font-black uppercase tracking-tight">Instant Redeem</span>
+                  </div>
+                  <div className="h-8 w-8 rounded-full bg-orange-50 flex items-center justify-center group-hover:bg-orange-500 group-hover:text-white transition-all">
+                    <ChevronRight size={16} strokeWidth={3} />
+                  </div>
                 </div>
               </div>
             </Link>
           ))}
         </div>
 
-        {/* EMPTY STATE */}
+        {/* 5. EMPTY STATE */}
         {offers.length === 0 && (
-            <div className="py-20 text-center">
-                <div className="h-20 w-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6 text-slate-200">
-                    <Search size={40} />
-                </div>
-                <h3 className="text-xl font-black text-slate-900 italic">No deals found... yet!</h3>
-                <p className="text-slate-500 font-medium">Check back soon for new student exclusive perks.</p>
+          <div className="py-24 text-center border-2 border-dashed border-orange-100 rounded-[3rem] bg-orange-50/20">
+            <div className="bg-orange-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+               <Sparkles className="text-orange-400" size={32} />
             </div>
+            <h3 className="text-lg font-bold text-orange-900/60">Restocking the shelves...</h3>
+            <p className="text-sm text-orange-900/40 mt-1">New exclusive deals are arriving shortly.</p>
+          </div>
         )}
       </div>
     </main>
