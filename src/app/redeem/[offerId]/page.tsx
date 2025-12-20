@@ -5,15 +5,15 @@ import RedeemClient from "./RedeemClient";
 import { 
   ArrowLeft, 
   ShieldCheck, 
-  Clock, 
-  Info, 
   ShoppingBag, 
   Sparkles,
-  CheckCircle2
+  CheckCircle2,
+  Zap,
+  LayoutDashboard,
+  Ticket
 } from "lucide-react";
 import Link from "next/link";
 
-// Helper function to generate unique coupon code
 function generateCouponCode(offerId: string, studentId: string): string {
   const offerPart = offerId.slice(-4).toUpperCase();
   const studentPart = studentId.slice(-4).toUpperCase();
@@ -27,287 +27,163 @@ export default async function RedeemPage({
   params: Promise<{ offerId: string }>;
 }) {
   const { offerId } = await params;
-
   const session = await getSessionUser();
   if (!session || session.role !== "STUDENT") redirect("/login");
 
-  // Get student record
   const student = await prisma.student.findUnique({
     where: { userId: session.userId },
   });
 
   if (!student) redirect("/login");
 
-  // Get offer with redemptions and merchant
   const offer = await prisma.offer.findUnique({
     where: { id: offerId },
     include: { 
       merchant: true,
-      redemptions: {
-        where: { studentId: student.id },
-      },
+      redemptions: { where: { studentId: student.id } },
     },
   });
 
-  if (!offer) {
-    return (
-      <main className="min-h-screen flex flex-col items-center justify-center bg-[#FDFDFF] p-6">
-        <div className="h-16 w-16 bg-rose-50 rounded-full flex items-center justify-center text-rose-500 mb-4">
-          <Info size={32} />
-        </div>
-        <h1 className="text-2xl font-black text-slate-900 italic tracking-tighter">Offer Not Found</h1>
-        <p className="text-slate-500 font-medium mt-2 mb-8 text-center max-w-xs">
-          This perk doesn't exist or has been removed.
-        </p>
-        <Link href="/dashboard" className="text-sm font-black uppercase tracking-widest text-indigo-600 flex items-center gap-2">
-          <ArrowLeft size={16} /> Back to Dashboard
-        </Link>
-      </main>
-    );
-  }
+  if (!offer || offer.status !== "ACTIVE") redirect("/dashboard");
 
-  if (offer.status !== "ACTIVE") {
-    return (
-      <main className="min-h-screen flex flex-col items-center justify-center bg-[#FDFDFF] p-6">
-        <div className="h-16 w-16 bg-rose-50 rounded-full flex items-center justify-center text-rose-500 mb-4">
-          <Info size={32} />
-        </div>
-        <h1 className="text-2xl font-black text-slate-900 italic tracking-tighter">Offer Unavailable</h1>
-        <p className="text-slate-500 font-medium mt-2 mb-8 text-center max-w-xs">
-          This perk is currently {offer.status.toLowerCase()}.
-        </p>
-        <Link href="/dashboard" className="text-sm font-black uppercase tracking-widest text-indigo-600 flex items-center gap-2">
-          <ArrowLeft size={16} /> Back to Dashboard
-        </Link>
-      </main>
-    );
-  }
-
-  // Check if already redeemed
   const existingRedemption = offer.redemptions[0];
   const alreadyRedeemed = !!existingRedemption;
-  
   let redemptionId: string;
   let couponCode: string;
-  
-  // Create redemption if not already exists
+
   if (!alreadyRedeemed) {
     couponCode = generateCouponCode(offerId, student.id);
-    
-    // Create redemption record in database
     const redemption = await prisma.$transaction(async (tx) => {
-      // Create redemption
       const newRedemption = await tx.redemption.create({
-        data: {
-          couponCode,
-          offerId,
-          studentId: student.id,
-          method: offer.redemptionType, // "QR", "CODE", or "LINK"
-          status: "ISSUED",
-          redeemedAt: new Date(),
+        data: { 
+          couponCode, 
+          offerId, 
+          studentId: student.id, 
+          method: offer.redemptionType, 
+          status: "ISSUED", 
+          redeemedAt: new Date() 
         },
       });
-      
-      // Increment redemption count on offer
-      await tx.offer.update({
-        where: { id: offerId },
-        data: {
-          redemptionCount: {
-            increment: 1,
-          },
-        },
+      await tx.offer.update({ 
+        where: { id: offerId }, 
+        data: { redemptionCount: { increment: 1 } } 
       });
-      
       return newRedemption;
     });
-    
     redemptionId = redemption.id;
     couponCode = redemption.couponCode;
-    
-    // Create audit log
-    await prisma.auditLog.create({
-      data: {
-        actorId: student.id,
-        entity: "REDEMPTION",
-        entityId: redemptionId,
-        action: "CREATE",
-        meta: {
-          offerId,
-          couponCode,
-          method: offer.redemptionType,
-        },
-      },
-    });
   } else {
     redemptionId = existingRedemption.id;
     couponCode = existingRedemption.couponCode;
   }
 
   return (
-    <main className="min-h-screen bg-[#FDFDFF] relative overflow-hidden flex flex-col items-center justify-center p-6">
-      {/* Background Ambience */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[500px] bg-gradient-to-b from-indigo-50/50 to-transparent pointer-events-none" />
-      
-      <div className="relative z-10 w-full max-w-xl">
-        {/* Back Button */}
-        <Link 
-          href="/dashboard" 
-          className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 hover:text-indigo-600 transition-colors mb-8 group"
-        >
-          <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform" /> 
-          Back to Perks
-        </Link>
+    <div className="min-h-screen bg-[#FFF5EE] flex font-sans text-[#3C1A0D]">
+      {/* SIDEBAR */}
+      <aside className="w-64 bg-[#3C1A0D] text-white flex flex-col p-8 hidden lg:flex sticky top-0 h-screen border-r border-orange-900/20">
+        <div className="flex items-center gap-3 mb-12">
+          <div className="h-10 w-10 bg-orange-600 rounded-xl flex items-center justify-center shadow-lg shadow-orange-900/40">
+            <ShieldCheck size={20} strokeWidth={2.5} />
+          </div>
+          <span className="font-black tracking-tight text-xl uppercase italic">
+            Edu<span className="text-orange-600">Perks</span>
+          </span>
+        </div>
+        <nav className="space-y-2 flex-1">
+          <Link href="/dashboard" className="flex items-center gap-3 px-4 py-3 bg-orange-600 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-orange-900/20 transition-transform active:scale-95">
+            <LayoutDashboard size={16} /> Dashboard
+          </Link>
+          <Link href="#" className="flex items-center gap-3 px-4 py-3 text-white/40 hover:text-white transition-all text-[10px] font-black uppercase tracking-widest">
+            <Ticket size={16} /> My Claims
+          </Link>
+        </nav>
+        <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
+          <p className="text-[9px] font-black uppercase text-white/30 tracking-widest mb-1">Student Verified</p>
+          <p className="text-[11px] font-bold text-orange-200 italic">#{student.id.slice(-8).toUpperCase()}</p>
+        </div>
+      </aside>
 
-        <div className="bg-white rounded-[48px] shadow-[0_40px_80px_-20px_rgba(0,0,0,0.08)] border border-slate-100 overflow-hidden">
-          
-          {/* MERCHANT BRANDING HEADER */}
-          <div className="bg-slate-900 p-10 text-white relative overflow-hidden">
-             <div className="absolute top-0 right-0 w-32 h-full bg-indigo-600/20 blur-3xl rounded-full" />
-             
-             <div className="relative z-10 flex flex-col items-center text-center">
-                <div className="h-16 w-16 bg-white rounded-[24px] flex items-center justify-center text-slate-900 mb-6 shadow-xl">
-                    <ShoppingBag size={32} />
-                </div>
-                <div className="flex items-center gap-2 text-indigo-400 font-black text-[10px] uppercase tracking-[0.3em] mb-2">
-                    <Sparkles size={12} fill="currentColor" /> Verified Perk
-                </div>
-                <h1 className="text-3xl font-black tracking-tighter italic leading-tight mb-2">
-                    {offer.discountPercent}% Off at {offer.merchant.tradeName}
-                </h1>
-                <p className="text-slate-400 font-medium text-sm max-w-xs leading-relaxed">
-                    {offer.title}
-                </p>
-             </div>
+      <main className="flex-1 p-4 lg:p-10 relative">
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-orange-200/10 blur-[120px] pointer-events-none -z-10" />
+
+        <div className="max-w-2xl mx-auto">
+          {/* MINIMAL TOP NAV */}
+          <div className="flex justify-between items-center mb-6 px-2">
+            <Link href="/dashboard" className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-[#3C1A0D]/40 hover:text-orange-600 transition-all">
+              <ArrowLeft size={14} /> Back
+            </Link>
+            <p className="text-[9px] font-black text-orange-900/30 uppercase tracking-widest italic">{session.email}</p>
           </div>
 
-          {/* REDEMPTION CONTENT */}
-          <div className="p-10 space-y-8">
-            {alreadyRedeemed && (
-              <div className="bg-emerald-50 border-2 border-emerald-200 rounded-3xl p-6 flex items-start gap-4">
-                <div className="h-10 w-10 bg-emerald-500 rounded-2xl flex items-center justify-center text-white shrink-0">
-                  <CheckCircle2 size={20} />
+          {/* VOUCHER CARD */}
+          <div className="bg-white rounded-[40px] shadow-[0_32px_80px_-20px_rgba(60,26,13,0.12)] border border-white overflow-hidden">
+            
+            {/* SLIM BRAND STRIP */}
+            <div className="bg-[#3C1A0D] px-8 py-6 text-white relative flex items-center justify-between overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-full bg-orange-600/20 blur-[30px]" />
+              
+              <div className="relative z-10 flex items-center gap-4">
+                <div className="h-12 w-12 bg-white rounded-xl flex items-center justify-center text-[#3C1A0D] shadow-lg rotate-2">
+                  <ShoppingBag size={22} strokeWidth={2.5} />
                 </div>
                 <div>
-                  <p className="text-sm font-black text-emerald-900 uppercase tracking-wide mb-1">
-                    Already Redeemed
-                  </p>
-                  <p className="text-xs text-emerald-700 leading-relaxed">
-                    You claimed this offer on {new Date(existingRedemption.redeemedAt).toLocaleDateString()}. Your unique code is displayed below.
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {!alreadyRedeemed && (
-              <div className="bg-indigo-50 border-2 border-indigo-200 rounded-3xl p-6 flex items-start gap-4">
-                <div className="h-10 w-10 bg-indigo-500 rounded-2xl flex items-center justify-center text-white shrink-0">
-                  <Sparkles size={20} />
-                </div>
-                <div>
-                  <p className="text-sm font-black text-indigo-900 uppercase tracking-wide mb-1">
-                    Successfully Claimed!
-                  </p>
-                  <p className="text-xs text-indigo-700 leading-relaxed">
-                    You've successfully claimed this offer. Your unique code has been generated and saved.
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* Offer availability info */}
-            {offer.studentCap > 0 && (
-              <div className="bg-amber-50 border border-amber-100 rounded-2xl p-4">
-                <p className="text-xs font-bold text-amber-800 text-center">
-                  {offer.redemptionCount} of {offer.studentCap} redemptions used
-                </p>
-                <div className="mt-2 w-full bg-amber-200 rounded-full h-1.5">
-                  <div 
-                    className="bg-amber-500 h-1.5 rounded-full transition-all duration-500"
-                    style={{ 
-                      width: `${Math.min(100, (offer.redemptionCount / offer.studentCap) * 100)}%` 
-                    }}
-                  />
-                </div>
-              </div>
-            )}
-
-            <div className="space-y-4">
-               <div className="flex items-center justify-between px-2">
-                  <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                    {alreadyRedeemed ? 'Your Code' : 'Unlock Details'}
-                  </h3>
-                  <div className="flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">
-                     <ShieldCheck size={10} /> {alreadyRedeemed ? 'ISSUED' : 'ACTIVE'}
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <span className="text-[9px] font-black uppercase tracking-[0.2em] text-orange-500">Exclusive Offer</span>
+                    <div className="h-1 w-1 rounded-full bg-white/20" />
+                    <span className="text-[9px] font-bold text-white/40">{new Date(offer.endAt).toLocaleDateString()}</span>
                   </div>
-               </div>
-               
-               <RedeemClient
-                 couponCode={couponCode}
-                 redirectUrl={offer.redirectUrl}
-                 offerId={offerId}
-                 studentId={student.id}
-                 alreadyRedeemed={alreadyRedeemed}
-                 redemptionMethod={offer.redemptionType}
-               />
-            </div>
-
-            {/* Redemption details */}
-            <div className="bg-slate-50 rounded-2xl p-4 space-y-3">
-              <p className="text-xs font-bold text-slate-900 uppercase tracking-wider">
-                Redemption Details
-              </p>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Redemption ID</p>
-                  <p className="text-xs font-mono text-slate-700 truncate">{redemptionId}</p>
-                </div>
-                <div>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Method</p>
-                  <p className="text-xs font-bold text-slate-700">{offer.redemptionType}</p>
-                </div>
-                <div>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Valid Until</p>
-                  <p className="text-xs font-medium text-slate-700">
-                    {new Date(offer.endAt).toLocaleDateString()}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Status</p>
-                  <p className="text-xs font-bold text-emerald-600">
-                    {alreadyRedeemed ? 'ISSUED' : 'NEW'}
-                  </p>
+                  <h1 className="text-xl md:text-2xl font-black italic tracking-tighter uppercase leading-none">
+                    {offer.discountPercent}% OFF <span className="text-orange-600">@{offer.merchant.tradeName}</span>
+                  </h1>
                 </div>
               </div>
+              <Zap size={24} className="text-orange-600/30 hidden sm:block" />
             </div>
 
-            {/* TRUST & TERMS FOOTER */}
-            <div className="pt-8 border-t border-slate-50 grid grid-cols-2 gap-4">
-                <div className="flex items-start gap-3">
-                    <div className="h-8 w-8 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 shrink-0">
-                        <Clock size={16} />
-                    </div>
-                    <div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-900">One-time Use</p>
-                        <p className="text-[10px] font-medium text-slate-400 leading-tight">Code valid once per student</p>
-                    </div>
+            {/* MAIN REDEMPTION AREA */}
+            <div className="p-6 md:p-10 space-y-8">
+              
+              {/* Ultra-Slim Status Bar */}
+              <div className="flex items-center justify-between px-2">
+                <div className="flex items-center gap-2">
+                   {alreadyRedeemed ? <CheckCircle2 size={16} className="text-orange-600" /> : <Sparkles size={16} className="text-orange-500" />}
+                   <p className="text-[10px] font-black uppercase tracking-widest opacity-70">
+                     {alreadyRedeemed ? 'Verified Claim' : 'Voucher Ready'}
+                   </p>
                 </div>
-                <div className="flex items-start gap-3">
-                    <div className="h-8 w-8 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 shrink-0">
-                        <ShieldCheck size={16} />
-                    </div>
-                    <div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-900">Verified ID</p>
-                        <p className="text-[10px] font-medium text-slate-400 leading-tight">Exclusively for {session.email?.split('@')[0]}</p>
-                    </div>
-                </div>
-            </div>
+                <div className="h-[1px] flex-1 mx-4 bg-orange-100/50" />
+                <p className="text-[10px] font-bold text-orange-800 uppercase italic">Code Secured</p>
+              </div>
 
-            <p className="text-center text-[9px] font-bold text-slate-300 uppercase tracking-widest leading-relaxed">
-                By clicking redeem, you agree to the merchant's specific <br /> terms of service and usage policy.
-            </p>
+              {/* REDEEM CLIENT */}
+              <RedeemClient
+                couponCode={couponCode}
+                redirectUrl={offer.redirectUrl}
+              />
+
+              {/* COMPACT DATA GRID */}
+              <div className="grid grid-cols-3 gap-3">
+                <div className="bg-[#FFF5EE] p-4 rounded-2xl border border-orange-100/30">
+                  <p className="text-[8px] font-black text-[#3C1A0D]/30 uppercase mb-1">Claim ID</p>
+                  <p className="text-[10px] font-mono font-bold italic">#{redemptionId.slice(-6).toUpperCase()}</p>
+                </div>
+                <div className="bg-[#FFF5EE] p-4 rounded-2xl border border-orange-100/30 text-center">
+                  <p className="text-[8px] font-black text-[#3C1A0D]/30 uppercase mb-1">Logic</p>
+                  <p className="text-[10px] font-black text-orange-600 uppercase">{offer.redemptionType}</p>
+                </div>
+                <div className="bg-[#FFF5EE] p-4 rounded-2xl border border-orange-100/30 text-right">
+                  <p className="text-[8px] font-black text-[#3C1A0D]/30 uppercase mb-1">Stock</p>
+                  <p className="text-[10px] font-bold">{offer.studentCap - offer.redemptionCount} Clips</p>
+                </div>
+              </div>
+
+              <p className="text-center text-[8px] font-black text-[#3C1A0D]/20 uppercase tracking-[0.4em]">
+                Verified Student Member Exclusive
+              </p>
+            </div>
           </div>
         </div>
-      </div>
-    </main>
+      </main>
+    </div>
   );
 }

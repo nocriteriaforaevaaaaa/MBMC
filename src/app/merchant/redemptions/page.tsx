@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, TrendingUp, Users, BarChart3 } from "lucide-react";
+import { ArrowLeft, TrendingUp, Users, BarChart3, ChevronLeft, Ticket } from "lucide-react";
 
 export default async function MerchantRedemptionsPage() {
   const session = await getSessionUser();
@@ -36,103 +36,124 @@ export default async function MerchantRedemptionsPage() {
   );
 
   return (
-    <main className="min-h-screen bg-[#F8FAFC] pb-20">
-      <div className="bg-white border-b border-slate-100 pt-12 pb-8 px-10">
-        <div className="max-w-5xl mx-auto">
+    <main className="min-h-screen bg-[#FFF5EE] text-[#3C1A0D] pb-20 font-sans">
+      {/* HEADER AREA */}
+      <div className="bg-white/50 backdrop-blur-md border-b border-orange-100 pt-16 pb-10 px-10">
+        <div className="max-w-6xl mx-auto">
           <Link
             href="/merchant"
-            className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 hover:text-indigo-600 transition-colors mb-6"
+            className="group inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.3em] text-[#3C1A0D]/40 hover:text-orange-600 transition-all mb-8"
           >
-            <ArrowLeft size={14} /> Back to Dashboard
+            <div className="h-8 w-8 rounded-full border border-orange-100 flex items-center justify-center group-hover:bg-orange-600 group-hover:text-white transition-all">
+               <ChevronLeft size={16} />
+            </div>
+            Back to Hub
           </Link>
-          <h1 className="text-4xl font-black text-slate-900 tracking-tighter">
-            Redemption Analytics
-          </h1>
+          <div className="flex flex-col md:flex-row justify-between items-end gap-6">
+            <div>
+                <div className="flex items-center gap-2 text-orange-600 font-black text-[10px] uppercase tracking-[0.25em] mb-3">
+                    <BarChart3 size={14} /> Performance Metrics
+                </div>
+                <h1 className="text-5xl font-black tracking-tighter">
+                    Redemption Analytics<span className="text-orange-600">.</span>
+                </h1>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-10 mt-12">
+      <div className="max-w-6xl mx-auto px-10 mt-16">
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-          <div className="bg-white rounded-3xl p-6 border border-slate-100">
-            <div className="h-12 w-12 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600 mb-4">
-              <TrendingUp size={24} />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+          <div className="bg-white rounded-[32px] p-8 border border-orange-50 shadow-sm">
+            <div className="h-14 w-14 bg-orange-600 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-orange-200 mb-6">
+              <TrendingUp size={28} />
             </div>
-            <p className="text-3xl font-black text-slate-900">{totalRedemptions}</p>
-            <p className="text-xs font-black uppercase tracking-widest text-slate-400 mt-1">
-              Total Redemptions
+            <p className="text-4xl font-black tracking-tighter">{totalRedemptions}</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#3C1A0D]/30 mt-2">
+              Gross Redemptions
             </p>
           </div>
 
-          <div className="bg-white rounded-3xl p-6 border border-slate-100">
-            <div className="h-12 w-12 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600 mb-4">
-              <BarChart3 size={24} />
+          <div className="bg-white rounded-[32px] p-8 border border-orange-50 shadow-sm">
+            <div className="h-14 w-14 bg-[#3C1A0D] text-white rounded-2xl flex items-center justify-center shadow-lg shadow-orange-900/10 mb-6">
+              <Ticket size={28} />
             </div>
-            <p className="text-3xl font-black text-slate-900">
+            <p className="text-4xl font-black tracking-tighter">
               {merchant.offers.filter(o => o.redemptions.length > 0).length}
             </p>
-            <p className="text-xs font-black uppercase tracking-widest text-slate-400 mt-1">
-              Active Offers
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#3C1A0D]/30 mt-2">
+              Converting Offers
             </p>
           </div>
 
-          <div className="bg-white rounded-3xl p-6 border border-slate-100">
-            <div className="h-12 w-12 bg-purple-50 rounded-2xl flex items-center justify-center text-purple-600 mb-4">
-              <Users size={24} />
+          <div className="bg-white rounded-[32px] p-8 border border-orange-50 shadow-sm">
+            <div className="h-14 w-14 bg-orange-50 text-orange-600 rounded-2xl flex items-center justify-center mb-6">
+              <Users size={28} />
             </div>
-            <p className="text-3xl font-black text-slate-900">
+            <p className="text-4xl font-black tracking-tighter">
               {new Set(merchant.offers.flatMap(o => o.redemptions.map(r => r.studentId))).size}
             </p>
-            <p className="text-xs font-black uppercase tracking-widest text-slate-400 mt-1">
-              Unique Students
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#3C1A0D]/30 mt-2">
+              Unique Reach
             </p>
           </div>
         </div>
 
         {/* Offers Breakdown */}
-        <div className="space-y-6">
+        <div className="space-y-10">
+          <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-[#3C1A0D]/40 px-2">Campaign Breakdown</h2>
+          
           {merchant.offers.map((offer) => (
-            <div key={offer.id} className="bg-white rounded-3xl p-8 border border-slate-100">
-              <div className="flex justify-between items-start mb-6">
+            <div key={offer.id} className="bg-white/80 backdrop-blur-xl rounded-[48px] p-10 shadow-[0_32px_64px_-16px_rgba(255,120,0,0.05)] border border-white">
+              <div className="flex flex-col md:flex-row justify-between items-start mb-10 gap-6">
                 <div>
-                  <h2 className="text-xl font-black text-slate-900">{offer.title}</h2>
-                  <p className="text-sm text-slate-500 mt-1">{offer.description}</p>
+                  <h2 className="text-2xl font-black tracking-tight">{offer.title}</h2>
+                  <p className="text-sm font-medium text-[#3C1A0D]/50 mt-2 max-w-xl">{offer.description}</p>
                 </div>
-                <span className="text-sm font-black px-4 py-2 bg-emerald-50 text-emerald-600 rounded-xl">
-                  {offer.redemptions.length} Redeemed
-                </span>
+                <div className="px-6 py-3 bg-orange-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-lg shadow-orange-200">
+                  {offer.redemptions.length} Conversions
+                </div>
               </div>
 
               {offer.redemptions.length > 0 ? (
-                <div className="space-y-3">
+                <div className="grid gap-4">
                   {offer.redemptions.map((redemption) => (
                     <div
                       key={redemption.id}
-                      className="flex justify-between items-center p-4 bg-slate-50 rounded-2xl"
+                      className="flex flex-col md:flex-row justify-between items-center p-6 bg-orange-50/50 rounded-[24px] border border-orange-100/50 group hover:bg-white hover:border-orange-200 transition-all"
                     >
-                      <div className="flex items-center gap-4">
-                        <div className="h-10 w-10 bg-indigo-100 rounded-xl flex items-center justify-center text-indigo-600 font-black text-sm">
+                      <div className="flex items-center gap-5">
+                        <div className="h-12 w-12 bg-[#3C1A0D] rounded-xl flex items-center justify-center text-white font-black text-sm shadow-md">
                           {redemption.student.user.email?.[0].toUpperCase()}
                         </div>
                         <div>
-                          <p className="font-bold text-slate-900">
+                          <p className="font-black text-[#3C1A0D] tracking-tight">
                             {redemption.student.user.email}
                           </p>
-                          <p className="text-xs text-slate-500">
-                            Code: <code className="font-mono font-bold">{redemption.couponCode}</code>
-                          </p>
+                          <div className="flex items-center gap-2 mt-1">
+                             <span className="text-[10px] font-black uppercase tracking-widest text-[#3C1A0D]/30">Voucher Key:</span>
+                             <code className="bg-white px-2 py-0.5 rounded border border-orange-100 text-[11px] font-mono font-bold text-orange-600">
+                                {redemption.couponCode}
+                             </code>
+                          </div>
                         </div>
                       </div>
-                      <p className="text-xs text-slate-400 font-medium">
-                       
-                      </p>
+                      <div className="mt-4 md:mt-0 text-right">
+                         <p className="text-[9px] font-black uppercase tracking-widest text-[#3C1A0D]/20">Timestamp</p>
+                         <p className="text-[11px] font-bold text-[#3C1A0D]/60 italic">
+                            {new Date(redemption.redeemedAt).toLocaleDateString()}
+                         </p>
+                      </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-center text-sm text-slate-400 font-bold py-8">
-                  No redemptions yet
-                </p>
+                <div className="py-12 border-2 border-dashed border-orange-100 rounded-[32px] flex flex-col items-center justify-center">
+                    <p className="text-[10px] font-black text-[#3C1A0D]/20 uppercase tracking-[0.2em]">
+                        Data Stream Empty
+                    </p>
+                </div>
               )}
             </div>
           ))}
