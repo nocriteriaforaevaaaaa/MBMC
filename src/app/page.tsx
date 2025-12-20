@@ -35,13 +35,13 @@ export default function HomePage() {
         <div className="absolute top-[-10%] left-[-5%] w-[800px] h-[800px] rounded-full bg-orange-200/40 blur-[140px]" />
         <div className="absolute bottom-[-10%] right-[-5%] w-[600px] h-[600px] rounded-full bg-orange-300/20 blur-[120px]" />
         {/* Large Decorative 'B' or Shape from the image */}
-        <div className="absolute top-10 -right-100 text-[20rem] font-black text-orange-600/5 leading-none select-none">EduPerks</div>
+        <div className="absolute top-10 -right-100 text-[0rem] font-black text-orange-600/5 leading-none select-none">EduPerks</div>
       </div>
 
       {/* NAVIGATION */}
       <nav className="relative z-50 flex items-center justify-between px-8 py-8 max-w-7xl mx-auto">
         <div className="flex items-center gap-2">
-          <span className="text-2xl font-black tracking-tight text-[#3C1A0D]">
+          <span className="text-6xl font-black tracking-tight text-[#3C1A0D]">
             EduPerks<span className="text-orange-600">.</span>
           </span>
         </div>
@@ -148,7 +148,7 @@ export default function HomePage() {
 
       {/* FOOTER */}
       <footer className="px-8 py-16 bg-[#3C1A0D] text-orange-100/50 text-center">
-        <span className="text-2xl font-black italic block mb-2 text-white">EduPerks.</span>
+        <span className="text-2xl font-black italic block mb-3 text-white">EduPerks.</span>
         <p className="text-[10px] font-black uppercase tracking-[0.2em]">Created by Students for Students © 2025</p>
       </footer>
     </main>
