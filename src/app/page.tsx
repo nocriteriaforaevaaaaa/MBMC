@@ -35,7 +35,7 @@ export default function HomePage() {
         <div className="absolute top-[-10%] left-[-5%] w-[800px] h-[800px] rounded-full bg-orange-200/40 blur-[140px]" />
         <div className="absolute bottom-[-10%] right-[-5%] w-[600px] h-[600px] rounded-full bg-orange-300/20 blur-[120px]" />
         {/* Large Decorative 'B' or Shape from the image */}
-        <div className="absolute top-10 -right-20 text-[40rem] font-black text-orange-600/5 leading-none select-none">B</div>
+        <div className="absolute top-10 -right-100 text-[20rem] font-black text-orange-600/5 leading-none select-none">EduPerks</div>
       </div>
 
       {/* NAVIGATION */}

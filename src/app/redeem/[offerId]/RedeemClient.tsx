@@ -76,14 +76,14 @@ export default function RedeemClient({
             <div className="absolute top-1/2 -left-4 h-8 w-8 bg-[#FFF5EE] border-r-4 border-orange-100 rounded-full -translate-y-1/2 shadow-inner" />
             <div className="absolute top-1/2 -right-4 h-8 w-8 bg-[#FFF5EE] border-l-4 border-orange-100 rounded-full -translate-y-1/2 shadow-inner" />
 
-            <p className="text-[10px] font-black uppercase tracking-[0.4em] text-[#3C1A0D]/30 mb-6 flex items-center justify-center gap-2">
-              <Ticket size={14} className="text-orange-600" /> Online Redemption Code
-            </p>
+          <p className="text-[10px] font-black uppercase tracking-[0.4em] text-[#3C1A0D]/30 mb-6 flex items-center justify-center gap-2">
+            <Ticket size={14} className="text-orange-600" /> System Credential
+          </p>
 
-            <div className="flex flex-col items-center gap-6">
-              <span className="text-4xl md:text-5xl font-black tracking-tighter text-[#3C1A0D] font-mono italic select-all bg-orange-50/50 px-4 py-2 rounded-xl">
-                {couponCode}
-              </span>
+          <div className="flex flex-col items-center gap-6">
+            <span className="text-4xl md:text-5xl font-black tracking-tighter text-[#3C1A0D] font-mono italic select-all bg-orange-50/50 px-4 py-2 rounded-xl">
+              {couponCode}
+            </span>
 
               <button
                 type="button"

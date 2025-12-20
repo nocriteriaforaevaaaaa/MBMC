@@ -186,9 +186,27 @@ export default async function RedeemPage({
                      {alreadyRedeemed ? 'Verified Claim' : 'Voucher Ready'}
                    </p>
                 </div>
+
+                
                 <div className="h-[1px] flex-1 mx-4 bg-orange-100/50" />
                 <p className="text-[10px] font-bold text-orange-800 uppercase italic">Code Secured</p>
               </div>
+
+               {offer.studentCap > 0 && (
+              <div className="bg-amber-50 border border-amber-100 rounded-2xl p-4">
+                <p className="text-xs font-bold text-amber-800 text-center">
+                  {offer.redemptionCount} of {offer.studentCap} redemptions used
+                </p>
+                <div className="mt-2 w-full bg-amber-200 rounded-full h-1.5">
+                  <div 
+                    className="bg-amber-500 h-1.5 rounded-full transition-all duration-500"
+                    style={{ 
+                      width: `${Math.min(100, (offer.redemptionCount / offer.studentCap) * 100)}%` 
+                    }}
+                  />
+                </div>
+              </div>
+            )}
 
               {/* REDEEM CLIENT */}
               <RedeemClient
@@ -198,21 +216,7 @@ export default async function RedeemPage({
                 redemptionId={redemptionId}
               />
 
-              {/* COMPACT DATA GRID */}
-              <div className="grid grid-cols-3 gap-3">
-                <div className="bg-[#FFF5EE] p-4 rounded-2xl border border-orange-100/30">
-                  <p className="text-[8px] font-black text-[#3C1A0D]/30 uppercase mb-1">Claim ID</p>
-                  <p className="text-[10px] font-mono font-bold italic">#{redemptionId.slice(-6).toUpperCase()}</p>
-                </div>
-                <div className="bg-[#FFF5EE] p-4 rounded-2xl border border-orange-100/30 text-center">
-                  <p className="text-[8px] font-black text-[#3C1A0D]/30 uppercase mb-1">Logic</p>
-                  <p className="text-[10px] font-black text-orange-600 uppercase">{offer.redemptionType}</p>
-                </div>
-                <div className="bg-[#FFF5EE] p-4 rounded-2xl border border-orange-100/30 text-right">
-                  <p className="text-[8px] font-black text-[#3C1A0D]/30 uppercase mb-1">Stock</p>
-                  <p className="text-[10px] font-bold">{offer.studentCap - offer.redemptionCount} Clips</p>
-                </div>
-              </div>
+             
 
               <p className="text-center text-[8px] font-black text-[#3C1A0D]/20 uppercase tracking-[0.4em]">
                 Verified Student Member Exclusive
