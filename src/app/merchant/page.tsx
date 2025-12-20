@@ -12,7 +12,8 @@ import {
   Zap,
   ChevronRight,
   LayoutDashboard,
-  Settings
+  Settings,
+  ScanLine
 } from "lucide-react";
 import Input from "@/app/components/Input";
 import Link from "next/link";
@@ -47,6 +48,15 @@ export default async function MerchantPage() {
           <span className="flex items-center gap-3"><LayoutDashboard size={18} /> Merchant Dashboard</span>
           <ChevronRight size={14} />
         </Link>
+
+        {/* QR Scanner Link in Sidebar */}
+        {merchant.kycStatus === "APPROVED" && (
+          <Link href="/merchant/scanner" className="flex items-center justify-between px-5 py-4 text-white/70 hover:text-white hover:bg-white/10 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all">
+            <span className="flex items-center gap-3"><ScanLine size={18} /> QR Scanner</span>
+            <ChevronRight size={14} />
+          </Link>
+        )}
+
         <Link href="/login" className="flex items-center gap-3 px-5 py-4 text-white/40 hover:text-white hover:bg-white/5 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all">
           <History size={18} /> Students
         </Link>

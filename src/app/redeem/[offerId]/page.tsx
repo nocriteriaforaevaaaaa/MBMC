@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import RedeemClient from "./RedeemClient";
+import crypto from "crypto";
 import { 
   ArrowLeft, 
   ShieldCheck, 
@@ -19,6 +20,23 @@ function generateCouponCode(offerId: string, studentId: string): string {
   const studentPart = studentId.slice(-4).toUpperCase();
   const random = Math.random().toString(36).substring(2, 6).toUpperCase();
   return `EDU-${offerPart}-${studentPart}-${random}`;
+}
+
+function generateQRData(redemptionId: string, offerId: string, studentId: string): string {
+  // Create a secure, encrypted payload for QR verification
+  const data = JSON.stringify({
+    rid: redemptionId,
+    oid: offerId,
+    sid: studentId,
+    ts: Date.now(),
+  });
+  
+  // In production, use proper encryption with a secret key
+  // For now, we'll use base64 encoding with a simple hash
+  const hash = crypto.createHash('sha256').update(data).digest('hex').substring(0, 16);
+  const encoded = Buffer.from(data).toString('base64');
+  
+  return `${encoded}.${hash}`;
 }
 
 export default async function RedeemPage({
@@ -50,9 +68,11 @@ export default async function RedeemPage({
   const alreadyRedeemed = !!existingRedemption;
   let redemptionId: string;
   let couponCode: string;
+  let qrData: string;
 
   if (!alreadyRedeemed) {
     couponCode = generateCouponCode(offerId, student.id);
+    
     const redemption = await prisma.$transaction(async (tx) => {
       const newRedemption = await tx.redemption.create({
         data: { 
@@ -60,21 +80,36 @@ export default async function RedeemPage({
           offerId, 
           studentId: student.id, 
           method: offer.redemptionType, 
-          status: "ISSUED", 
-          redeemedAt: new Date() 
+          status: "ISSUED",
+          issuedAt: new Date(),
+          qrData: "temp" // Temporary, will update after getting ID
         },
       });
+      
+      // Generate QR data with redemption ID
+      const qrDataValue = generateQRData(newRedemption.id, offerId, student.id);
+      
+      // Update with actual QR data
+      await tx.redemption.update({
+        where: { id: newRedemption.id },
+        data: { qrData: qrDataValue }
+      });
+      
       await tx.offer.update({ 
         where: { id: offerId }, 
         data: { redemptionCount: { increment: 1 } } 
       });
-      return newRedemption;
+      
+      return { ...newRedemption, qrData: qrDataValue };
     });
+    
     redemptionId = redemption.id;
-    couponCode = redemption.couponCode;
+    couponCode = redemption.couponCode!;
+    qrData = redemption.qrData!;
   } else {
     redemptionId = existingRedemption.id;
-    couponCode = existingRedemption.couponCode;
+    couponCode = existingRedemption.couponCode!;
+    qrData = existingRedemption.qrData!;
   }
 
   return (
@@ -159,6 +194,8 @@ export default async function RedeemPage({
               <RedeemClient
                 couponCode={couponCode}
                 redirectUrl={offer.redirectUrl}
+                qrData={qrData}
+                redemptionId={redemptionId}
               />
 
               {/* COMPACT DATA GRID */}
