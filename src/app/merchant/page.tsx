@@ -12,7 +12,8 @@ import {
   Zap,
   ChevronRight,
   LayoutDashboard,
-  Settings
+  Settings,
+  ScanLine
 } from "lucide-react";
 import Input from "@/app/components/Input";
 import Link from "next/link";
@@ -47,6 +48,15 @@ export default async function MerchantPage() {
           <span className="flex items-center gap-3"><LayoutDashboard size={18} /> Merchant Dashboard</span>
           <ChevronRight size={14} />
         </Link>
+
+        {/* QR Scanner Link in Sidebar */}
+        {merchant.kycStatus === "APPROVED" && (
+          <Link href="/merchant/scanner" className="flex items-center justify-between px-5 py-4 text-white/70 hover:text-white hover:bg-white/10 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all">
+            <span className="flex items-center gap-3"><ScanLine size={18} /> QR Scanner</span>
+            <ChevronRight size={14} />
+          </Link>
+        )}
+
         <Link href="/login" className="flex items-center gap-3 px-5 py-4 text-white/40 hover:text-white hover:bg-white/5 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all">
           <History size={18} /> Students
         </Link>
@@ -130,7 +140,12 @@ export default async function MerchantPage() {
                 </div>
               </div>
 
-              <form action="/api/merchant/offers" method="POST" className="space-y-10">
+<form
+  action="/api/merchant/offers"
+  method="POST"
+  encType="multipart/form-data"
+  className="space-y-10"
+>
                 <Input name="title" label="Offer Headline" placeholder="e.g. 20% Student Discount" required />
                 
                 <div className="space-y-3">
@@ -159,6 +174,18 @@ export default async function MerchantPage() {
                 </div>
 
                 <Input name="redirectUrl" label="Redirection Endpoint (URL)" placeholder="https://yourstore.com" required />
+<div className="space-y-3">
+  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#3C1A0D]/40 ml-2">
+    Offer Image (Optional)
+  </label>
+
+  <input
+    type="file"
+    name="image"             
+    accept="image/*"
+    className="w-full bg-white border border-orange-100 rounded-[24px] px-6 py-5 text-sm font-bold text-[#3C1A0D]"
+  />
+</div>
 
                 <button className="w-full py-6 rounded-[24px] bg-[#3C1A0D] text-white font-black text-[11px] uppercase tracking-[0.3em] shadow-2xl shadow-orange-900/20 hover:bg-orange-600 hover:-translate-y-1 transition-all active:scale-95">
                   Authorize & Push Live

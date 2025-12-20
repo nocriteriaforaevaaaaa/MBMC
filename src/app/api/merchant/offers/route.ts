@@ -20,30 +20,38 @@ export async function POST(req: Request) {
     );
   }
 
-  const form = await req.formData();
+  const formData = await req.formData();
 
-  const title = form.get("title") as string;
-  const description = form.get("description") as string;
-  const category = form.get("category") as string;
-  const redirectUrl = form.get("redirectUrl") as string;
-  const discountPercent = Number(form.get("discountPercent"));
+  const title = formData.get("title") as string;
+  const description = formData.get("description") as string;
+  const category = formData.get("category") as string;
+  const redirectUrl = formData.get("redirectUrl") as string;
+  const discountPercent = Number(formData.get("discountPercent") || 0);
+  const imageFile = formData.get("image") as File | null;
 
-  // ✅ Validation FIRST
-  if (!redirectUrl || redirectUrl.trim() === "") {
-    return NextResponse.json(
-      { error: "Redirect URL is required" },
-      { status: 400 }
-    );
-  }
-
-  if (!title || !description || !category) {
+  if (!title || !description || !category || !redirectUrl) {
     return NextResponse.json(
       { error: "Missing required fields" },
       { status: 400 }
     );
   }
 
-  await prisma.offer.create({
+  // 🔹 Convert image → Base64
+  let imageUrl: string | undefined;
+
+  if (imageFile && imageFile.size > 0) {
+    if (imageFile.size > 500_000) {
+      return NextResponse.json(
+        { error: "Image too large (max 500KB)" },
+        { status: 400 }
+      );
+    }
+
+    const buffer = Buffer.from(await imageFile.arrayBuffer());
+    imageUrl = `data:${imageFile.type};base64,${buffer.toString("base64")}`;
+  }
+
+  const offer = await prisma.offer.create({
     data: {
       merchantId: merchant.id,
       title,
@@ -51,11 +59,13 @@ export async function POST(req: Request) {
       category,
       discountPercent,
       redirectUrl,
-      status: "ACTIVE",
       startAt: new Date(),
-      endAt: new Date(Date.now() + 30 * 86400000),
+      endAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      status: "ACTIVE",
+      imageUrl, // ✅ MATCHES YOUR SCHEMA
     },
   });
 
-  return NextResponse.redirect(new URL("/merchant", req.url));
-}
+return NextResponse.redirect(
+  new URL("/merchant", req.url)
+);}
