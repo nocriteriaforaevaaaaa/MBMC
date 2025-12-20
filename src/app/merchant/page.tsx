@@ -140,7 +140,12 @@ export default async function MerchantPage() {
                 </div>
               </div>
 
-              <form action="/api/merchant/offers" method="POST" className="space-y-10">
+<form
+  action="/api/merchant/offers"
+  method="POST"
+  encType="multipart/form-data"
+  className="space-y-10"
+>
                 <Input name="title" label="Offer Headline" placeholder="e.g. 20% Student Discount" required />
                 
                 <div className="space-y-3">
@@ -169,6 +174,18 @@ export default async function MerchantPage() {
                 </div>
 
                 <Input name="redirectUrl" label="Redirection Endpoint (URL)" placeholder="https://yourstore.com" required />
+<div className="space-y-3">
+  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#3C1A0D]/40 ml-2">
+    Offer Image (Optional)
+  </label>
+
+  <input
+    type="file"
+    name="image"             
+    accept="image/*"
+    className="w-full bg-white border border-orange-100 rounded-[24px] px-6 py-5 text-sm font-bold text-[#3C1A0D]"
+  />
+</div>
 
                 <button className="w-full py-6 rounded-[24px] bg-[#3C1A0D] text-white font-black text-[11px] uppercase tracking-[0.3em] shadow-2xl shadow-orange-900/20 hover:bg-orange-600 hover:-translate-y-1 transition-all active:scale-95">
                   Authorize & Push Live

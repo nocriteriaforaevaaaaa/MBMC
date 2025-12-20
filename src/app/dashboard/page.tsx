@@ -145,6 +145,13 @@ export default async function DashboardPage() {
                 <h4 className="font-bold text-base text-[#3C1A0D] line-clamp-2 leading-snug mb-4 group-hover:text-orange-600 transition-colors">
                   {offer.title}
                 </h4>
+{offer.imageUrl && (
+  <img
+    src={offer.imageUrl}
+    alt={offer.title}
+    className="w-full h-40 object-contain rounded-xl mt-3"
+  />
+)}
 
                 <div className="mt-auto flex items-center justify-between pt-4 border-t border-orange-50">
                   <div className="flex items-center gap-1.5 text-orange-900/40">
