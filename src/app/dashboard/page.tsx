@@ -127,14 +127,14 @@ export default async function DashboardPage() {
               href={`/redeem/${offer.id}`}
               className="group relative bg-white border border-orange-100 rounded-[2rem] p-5 hover:shadow-[0_20px_50px_rgba(255,125,50,0.1)] hover:-translate-y-1 transition-all duration-300 flex flex-col"
             >
+              {/* Discount badge */}
+              <span className="absolute top-4 right-4 text-[11px] font-black text-orange-700 bg-orange-100 px-3 py-1 rounded-full uppercase tracking-tighter">
+                {offer.discountPercent}% Off
+              </span>
+
               <div className="flex justify-between items-start mb-6">
                 <div className="h-12 w-12 bg-orange-50 rounded-2xl flex items-center justify-center text-orange-600 group-hover:bg-orange-500 group-hover:text-white transition-all duration-300 group-hover:shadow-lg group-hover:shadow-orange-200">
                   <Store size={24} strokeWidth={2} />
-                </div>
-                <div className="flex flex-col items-end">
-                  <span className="text-[11px] font-black text-orange-700 bg-orange-100 px-3 py-1 rounded-full uppercase tracking-tighter">
-                    {offer.discountPercent}% Off
-                  </span>
                 </div>
               </div>
               
@@ -145,6 +145,13 @@ export default async function DashboardPage() {
                 <h4 className="font-bold text-base text-[#3C1A0D] line-clamp-2 leading-snug mb-4 group-hover:text-orange-600 transition-colors">
                   {offer.title}
                 </h4>
+                {offer.imageUrl && (
+                  <img
+                    src={offer.imageUrl}
+                    alt={offer.title}
+                    className="w-full h-40 object-contain rounded-xl mt-3"
+                  />
+                )}
 
                 <div className="mt-auto flex items-center justify-between pt-4 border-t border-orange-50">
                   <div className="flex items-center gap-1.5 text-orange-900/40">

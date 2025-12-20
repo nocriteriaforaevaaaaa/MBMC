@@ -192,12 +192,6 @@ export default async function MerchantPage() {
                 merchant.offers.map((offer) => (
                   <div key={offer.id} className="group bg-white border border-orange-50 p-8 rounded-[40px] hover:shadow-[0_40px_80px_-20px_rgba(255,120,0,0.15)] hover:border-orange-200 transition-all cursor-pointer">
                     <div className="flex justify-between items-start mb-6">
-                      <span className="text-[10px] font-black px-4 py-2 bg-orange-50 text-orange-600 rounded-xl border border-orange-100 uppercase tracking-widest">
-                        {offer.discountPercent}% Yield
-                      </span>
-                      <div className="h-10 w-10 rounded-full bg-orange-50 text-orange-600 flex items-center justify-center group-hover:bg-orange-600 group-hover:text-white transition-all shadow-sm">
-                        <ArrowUpRight size={18} />
-                      </div>
                     </div>
                     <h3 className="text-2xl font-black text-[#3C1A0D] group-hover:text-orange-600 transition-colors tracking-tighter">
                       {offer.title}

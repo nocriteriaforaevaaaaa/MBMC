@@ -133,7 +133,7 @@ export default async function RedeemPage({
                     <span className="text-[9px] font-bold text-white/40">{new Date(offer.endAt).toLocaleDateString()}</span>
                   </div>
                   <h1 className="text-xl md:text-2xl font-black italic tracking-tighter uppercase leading-none">
-                    {offer.discountPercent}% OFF <span className="text-orange-600">@{offer.merchant.tradeName}</span>
+                    {17}% OFF <span className="text-orange-600">@{offer.merchant.tradeName}</span>
                   </h1>
                 </div>
               </div>
