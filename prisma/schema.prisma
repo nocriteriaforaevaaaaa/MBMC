@@ -48,6 +48,7 @@ model Merchant {
   legalName String
   tradeName String?
   pan       String?
+  panCardUrl  String?
   planTier  PlanTier   @default(FREE)
   kycStatus KycStatus  @default(PENDING)
   offers    Offer[]
@@ -92,8 +93,11 @@ model Redemption {
   status     String    @default("ISSUED") // ISSUED | REDEEMED | EXPIRED
   redeemedAt DateTime?
   couponCode String?   @unique
-
+  qrData     String?   @unique 
+  verifiedBy String?   
   createdAt  DateTime  @default(now())
+  issuedAt   DateTime  @default(now())
+  
 
   @@unique([offerId, studentId])
   @@index([offerId])
